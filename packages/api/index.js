@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = 4000;
-const IP = '192.168.0.110';
+const IP = 'localhost';
 
 const http = require('http').Server(app);
 const cors = require('cors');
