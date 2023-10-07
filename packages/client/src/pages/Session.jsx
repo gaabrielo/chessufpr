@@ -11,9 +11,13 @@ import { UserCircleIcon as UserWhite } from '@heroicons/react/24/solid';
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid';
 
 import { Header } from '../components/Header';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { IconButton } from '../components/IconButton';
+import Home from './Home';
+
+// import socketIO from 'socket.io-client';
+// const socket = socketIO.connect('http://localhost:4000');
 
 const SessionPage = ({ socket }) => {
   const navigate = useNavigate();
@@ -88,4 +92,19 @@ const SessionPage = ({ socket }) => {
   );
 };
 
-export default SessionPage;
+function SessionControl({ socket }) {
+  const [username, setUsername] = useState(localStorage.getItem('userName'));
+  const { sessionId } = useParams();
+
+  // useEffect(() => {
+
+  // }, [username, sessionId]);
+
+  if (!username) {
+    return <Home onSetUsername={(usr) => setUsername(usr)} socket={socket} />;
+  } else {
+    return <SessionPage socket={socket} />;
+  }
+}
+
+export default SessionControl;

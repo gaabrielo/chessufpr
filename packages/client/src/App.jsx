@@ -11,13 +11,11 @@ function App() {
   return (
     <BrowserRouter>
       <div className="flex flex-col w-full h-full max-h-screen">
-        {/*h-full */}
         <div className="w-full h-full">
-          {/*h-full */}
           <Routes>
             <Route path="/" element={<Home socket={socket} />}></Route>
             <Route
-              path="/match"
+              path="/match/:sessionId"
               element={<SessionPage socket={socket} />}
             ></Route>
           </Routes>

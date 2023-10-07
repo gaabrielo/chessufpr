@@ -13,7 +13,8 @@ const socketIO = require('socket.io')(http, {
   },
 });
 
-let users = [];
+// let users = [];
+let sessions = [];
 
 socketIO.on('connection', (socket) => {
   console.log(`⚡: ${socket.id} user just connected!`);
@@ -27,17 +28,53 @@ socketIO.on('connection', (socket) => {
   socket.on('typing', (data) => socket.broadcast.emit('typingResponse', data));
 
   // Lista novos usuarios que se conectaram ao server
-  socket.on('newUser', (data) => {
-    users.push(data);
-    console.log(users);
-    socketIO.emit('newUserResponse', users);
+  socket.on('newUser', ({ userName, socketID, sessionID, newSesh }) => {
+    // users.push(data);
+
+    if (newSesh) {
+      sessions.push({
+        id: sessionID,
+        users: [{ userName, socketID }],
+      });
+    } else {
+      sessions
+        .find((s) => s.id === sessionID)
+        .users.push({
+          userName,
+          socketID,
+        });
+    }
+
+    console.log(sessions);
+
+    socketIO.emit(
+      'newUserResponse',
+      sessions.find((s) => s.id === sessionID).users
+    );
   });
 
   socket.on('disconnect', () => {
     console.log('🔥: A user disconnected');
-    users = users.filter((user) => user.socketID !== socket.id);
-    console.log(users);
-    socketIO.emit('newUserResponse', users);
+
+    const seshIndex = sessions.findIndex((s) =>
+      s.users.some((user) => user.socketID !== socket.id)
+    );
+
+    if (seshIndex !== -1) {
+      // Filtra os usuários da sessão para remover o usuário com o ID especificado
+      sessions[seshIndex].users = sessions[seshIndex].users.filter(
+        (user) => user.socketID !== socket.id
+      );
+
+      sessions[seshIndex].users.length === 0
+        ? sessions.splice(seshIndex, 1)
+        : null;
+    }
+
+    console.log(sessions);
+    // users = users.filter((user) => user.socketID !== socket.id);
+    // console.log(users);
+    socketIO.emit('newUserResponse', sessions[seshIndex]?.users ?? []);
     socket.disconnect();
   });
 });
