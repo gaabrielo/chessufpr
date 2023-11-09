@@ -2,7 +2,10 @@ import ChatBar from '../components/ChatBar';
 import Gameboard from '../components/Gameboard';
 import GameboardHeader from '../components/GameboardHeader';
 import {
+  ArrowTopRightOnSquareIcon,
   ChatBubbleBottomCenterTextIcon,
+  Cog6ToothIcon,
+  InformationCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
@@ -14,10 +17,15 @@ import { Header } from '../components/Header';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { IconButton } from '../components/IconButton';
+import { SettingsModal } from '../components/SettingsModal';
+import { VictoryModal } from '../components/VictoryModal';
 
 const SessionPage = ({ socket }) => {
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(true);
+  const [isVictoryModalOpen, setIsVictoryModalOpen] = useState(false);
+  const [victoryMessage, setVictoryMessage] = useState(null);
 
   const handleLeaveChat = () => {
     localStorage.removeItem('userName');
@@ -26,15 +34,45 @@ const SessionPage = ({ socket }) => {
   };
 
   const [players, setPlayers] = useState([]);
+  const [isPlayerBlack, setIsPlayerBack] = useState(false);
+  const [isWatcher, setIsWatcher] = useState(true);
 
   useEffect(() => {
-    socket.on('newUserResponse', (data) => setPlayers(data));
+    socket.on('newUserResponse', (data) => {
+      const currentPlayers = data.filter((p) => !!p?.player);
+
+      setIsPlayerBack(
+        () =>
+          data.find((p) => p.userName === localStorage.getItem('userName'))
+            ?.player === 2
+      );
+
+      setIsWatcher(
+        () =>
+          typeof currentPlayers.find(
+            (p) => p.userName === localStorage.getItem('userName')
+          ) !== 'object'
+      );
+
+      setPlayers(currentPlayers);
+    });
   }, [socket, players]);
 
   return (
-    <div className="flex flex-col h-full md:h-screen">
+    <div className="flex flex-col h-full md:h-screen relative">
+      <SettingsModal
+        open={isSettingsModalOpen}
+        onClose={setIsSettingsModalOpen}
+      />
+      <VictoryModal
+        open={isVictoryModalOpen}
+        onClose={setIsVictoryModalOpen}
+        subtitle={victoryMessage?.result ?? ''}
+        title={victoryMessage?.message ?? ''}
+      />
+
       <aside
-        className={`w-full h-full fixed top-0 left-0 bg-zinc-800 z-10 transition-transform md:hidden ${
+        className={`w-full h-full fixed top-0 left-0 bg-zinc-800 z-20 transition-transform md:hidden ${
           isChatOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -49,37 +87,64 @@ const SessionPage = ({ socket }) => {
           <ChatBar socket={socket} />
         </div>
       </aside>
-
       <Header>
-        <div className="flex gap-2 w-full">
+        <div className="flex gap-2 justify-end w-full">
+          <IconButton
+            styles="text-red-600 hover:text-red-500"
+            onClick={handleLeaveChat}
+          >
+            <ArrowRightOnRectangleIcon className="w-6 h-6" />
+          </IconButton>
+
           <IconButton styles="md:hidden" onClick={() => setIsChatOpen(true)}>
-            <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
+            <ChatBubbleBottomCenterTextIcon className="w-6 h-6" />
           </IconButton>
 
           <IconButton
-            styles="text-red-600 hover:text-red-500 md:mr-0 md:ml-auto"
-            onClick={handleLeaveChat}
+            // styles="md:mr-0 md:ml-auto"
+            onClick={() => setIsSettingsModalOpen(true)}
           >
-            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            <InformationCircleIcon className="w-6 h-6" />
           </IconButton>
         </div>
       </Header>
-
-      <div className="flex h-full max-md:py-2 w-full max-w-[1280px] mx-auto">
+      {/* max-md:py-2 */}
+      <div className="flex h-full w-full">
         <div className="hidden md:flex">
           <ChatBar socket={socket} />
         </div>
 
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col gap-2">
+        <div className="flex-1 flex flex-col items-center">
+          {/* <GameboardHeader /> */}
+
+          <div className="flex flex-col gap-2 mt-8 max-w-[1280px] mx-auto">
             <div className="flex gap-2 items-center">
               <UserBlack className="h-8 w-8" />
-              <span>{players[1]?.userName ?? 'Aguardando jogador...'}</span>
+              <span>
+                {players.length > 1
+                  ? isPlayerBlack
+                    ? players.find((p) => p.player === 1).userName
+                    : players.find((p) => p.player === 2).userName
+                  : 'Aguardando jogador...'}
+              </span>
             </div>
-            <Gameboard />
+            <Gameboard
+              isWatcher={isWatcher}
+              isSecondPlayer={isPlayerBlack}
+              players={players}
+              onGameEnd={(winMessage) => {
+                setIsVictoryModalOpen(true);
+                setVictoryMessage(winMessage);
+              }}
+              socket={socket}
+            />
             <div className="flex gap-2 items-center">
               <UserWhite className="h-8 w-8" />
-              <span>{players[0]?.userName}</span>
+              <span>
+                {isPlayerBlack
+                  ? localStorage.getItem('userName')
+                  : players.find((p) => p.player == 1)?.userName}
+              </span>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import SessionPage from './pages/Session';
 
 import socketIO from 'socket.io-client';
-const socket = socketIO.connect('http://localhost:4000');
+const socket = socketIO.connect('http://10.158.60.85:4000');
 
 function App() {
   return (

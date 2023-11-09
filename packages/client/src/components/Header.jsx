@@ -5,7 +5,7 @@ export function Header({ children }) {
 
   return (
     <header className="border-b border-zinc-700 text-gray-50">
-      <div className="w-full max-w-[1280px] flex gap-6 items-center mx-auto my-0 p-6">
+      <div className="w-full flex gap-6 items-center p-4">
         <h1 className="text-2xl font-black text-left">
           Chess
           <span className="text-xl text-orange-500">.</span>
